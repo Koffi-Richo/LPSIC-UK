@@ -22,6 +22,9 @@ const register = async (req, res) => {
 // Login a user
 const login = async (req, res) => {
     const { email, password } = req.body;
+    if(req.body.attaque) {
+        return res.status(401).json({ message: 'Un script a été injecté' });
+    }
     // const tokenHeader = req.headers.authorization;
     // if(!tokenHeader) {
     //     return res.status(403).json({ message: 'Token is required' });
@@ -45,8 +48,8 @@ const login = async (req, res) => {
         const token = generateToken(user, user.role, true);
         const refToken = refreshToken(user);
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        console.log("Decoded", decoded);
+        // const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        // console.log("Decoded", decoded);
 
         // Set user as active
         user.isActive = true;
