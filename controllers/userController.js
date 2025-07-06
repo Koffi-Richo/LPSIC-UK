@@ -96,5 +96,45 @@ const updateUser = async (req, res) => {
     }
 };
 
-module.exports = { register, login, getAllUsers, updateUser };
+// Refresh access token using refresh token
+const refreshAccessToken = async (req, res) => {
+    try {
+        const { refreshToken: clientRefreshToken } = req.body;
+        
+        if (!clientRefreshToken) {
+            return res.status(401).json({ message: 'Refresh token is required' });
+        }
+
+        // Verify the refresh token
+        const decoded = jwt.verify(clientRefreshToken, process.env.JWT_REFRESH_SECRET);
+        
+        // Find the user and verify the refresh token matches
+        const user = await User.findById(decoded.user._id);
+        if (!user || user.refreshToken !== clientRefreshToken) {
+            return res.status(403).json({ message: 'Invalid refresh token' });
+        }
+
+        // Generate new access token
+        const newAccessToken = generateToken(user, user.role, user.isActive);
+        
+        // Optionally generate new refresh token (token rotation)
+        const newRefreshToken = refreshToken(user);
+        user.refreshToken = newRefreshToken;
+        await user.save();
+
+        return res.status(200).json({
+            message: 'Token refreshed successfully',
+            accessToken: newAccessToken,
+            refreshToken: newRefreshToken
+        });
+
+    } catch (error) {
+        if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+            return res.status(403).json({ message: 'Invalid or expired refresh token' });
+        }
+        return res.status(500).json({ message: 'Token refresh failed', error });
+    }
+};
+
+module.exports = { register, login, getAllUsers, updateUser, refreshAccessToken };
 

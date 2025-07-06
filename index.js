@@ -59,6 +59,11 @@ app.use(cors(corsOptions));
 
 // Routes
 app.use('/products', productRoutes);
+
+// Si je veux utiliser le middleware auth sur les produits, je dois le mettre avant les routes
+// app.use('/products', auth, productRoutes);
+
+
 app.use('/auth', userRoutes);
 
 
